@@ -18,7 +18,7 @@ using sifstream = std::shared_ptr<std::ifstream>;
 /**
  * @brief file selected check
  * 
- * @param com_line 
+ * @param com_line type is int
  */
 void file_selected_check(int com_line){
 	if((com_line-1)<=0) {
@@ -30,8 +30,8 @@ void file_selected_check(int com_line){
 /**
  * @brief file exists check
  * 
- * @param file_name as string
- * @param shrd  as shared_ptr<ifstream>
+ * @param file_name type is string
+ * @param shrd  type is shared_ptr<ifstream>
  */
 void file_exists_check(std::string file_name, sifstream shrd) {
 	file::path path(file_name);
@@ -53,8 +53,8 @@ void file_exists_check(std::string file_name, sifstream shrd) {
 /**
  * @brief read to single string
  * 
- * @param shrd as shared_ptr<ifstream>&
- * @param f_str as string
+ * @param shrd type is shared_ptr<ifstream>&
+ * @param f_str type is string
  */
 void full_read_line(const sifstream shrd, std::string& f_str){
 	while(!shrd->eof()){
@@ -67,8 +67,8 @@ void full_read_line(const sifstream shrd, std::string& f_str){
 /**
  * @brief read each line to str_arr. 
  * 
- * @param shrd as shared_ptr<ifstream>&
- * @param str_arr as vector<string>&
+ * @param shrd type is shared_ptr<ifstream>&
+ * @param str_arr type is vector<string>&
  */
 void read_line(const sifstream &shrd, std::vector<std::string>& str_arr){
 	while(!shrd->eof()){
@@ -78,6 +78,12 @@ void read_line(const sifstream &shrd, std::vector<std::string>& str_arr){
 	}
 }
 
+/**
+ * @brief the function extracts +, -, <, >, [, ], , and .
+ * 
+ * @param f_str type is string&
+ * @return std::string 
+ */
 std::string extract_str(std::string& f_str){
 	static std::string check_str{'+', '-', '<', '>', '.', ',', '[', ']'};
 	std::string bf_str;
@@ -141,7 +147,7 @@ void file_exe(const sifstream shrd){
 int main(int argc, char*argv[]) {
 	sifstream target_file;
 	std::string f_str, bf_str;
-	std::vector<std::string> file_place;
+	std::vector<std::string> file_lines;
 
 	using func_v  = std::function<void(std::vector<char>&, size_t&)>;
 	
@@ -160,10 +166,28 @@ int main(int argc, char*argv[]) {
 		[](std::vector<char>&v,size_t& pos) {std::cin >> v.at(pos);},
 	};
 
+	/**
+	 * @brief judge that the file is not invalid
+	 */
 	file_selected_check(argc);
 	file_exists_check(argv[1], target_file);
-	read_line(target_file, file_place);
-	file_exe(target_file);
+
+	/**
+	 * @brief read all file
+	 */
+	read_line(target_file, file_lines);
+
+	/**
+	 * @brief compile error check
+	 */
+	search_while_pair(file_lines);
+
+	/**
+	 * @brief execute source file
+	 */
+	file_exe(target_file, file_lines);//TODO
+
+
 }
 
 void read_file(const sifstream& target_file, std::string& file_e) {
