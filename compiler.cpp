@@ -132,16 +132,55 @@ void file_exe(const sifstream shrd){
 	size_t count_line;
 
 	std::vector<char>mem_str{0};
-	func_v add     = [](std::vector<char>&v,size_t& pos) {++v.at(pos);};
-	func_v min     = [](std::vector<char>&v,size_t& pos) {--v.at(pos);};
-	func_v mem_add = [](std::vector<char>&v,size_t& pos) {++pos;};
-	func_v mem_min = [](std::vector<char>&v,size_t& pos) {--pos;};
-	func_v output  = [](std::vector<char>&v,size_t& pos) {std::cout << v.at(pos);};
-	func_v input   = [](std::vector<char>&v,size_t& pos) {std::cin >> v.at(pos);};
+	func_v add         = [](std::vector<char>&v, size_t& pos) {++v.at(pos);};
+	func_v min         = [](std::vector<char>&v, size_t& pos) {--v.at(pos);};
+	func_v mem_add     = [](std::vector<char>&v, size_t& pos) {++pos;};
+	func_v mem_min     = [](std::vector<char>&v, size_t& pos) {--pos;};
+	func_v output      = [](std::vector<char>&v, size_t& pos) {std::cout << v.at(pos);};
+	func_v input       = [](std::vector<char>&v, size_t& pos) {std::cin >> v.at(pos);};
+	func_v while_begin = [](std::vector<char>&v, size_t& pos) {};//dummy
+	func_v while_end   = [](std::vector<char>&v, size_t& pos) {};//dummy
 
 	read_line(shrd, file_place);
 
 //TODO
+}
+
+void file_exe(const sifstream& shrd, std::vector<std::string>& file_line){
+	using func_v  = std::function<void(std::vector<char>&, size_t&)>;
+
+	enum class FUNCS: int {ADD, DIFF, MEM_ADD, MEM_DIFF, OUTPUT, INPUT, WHILE_BEGIN, WHILE_END};
+
+	std::array<func_v, 8> func{
+		[](std::vector<char>&v, size_t& pos) {++v.at(pos);},
+		[](std::vector<char>&v, size_t& pos) {--v.at(pos);},
+		[](std::vector<char>&v, size_t& pos) {++pos;},
+		[](std::vector<char>&v, size_t& pos) {--pos;},
+		[](std::vector<char>&v, size_t& pos) {std::cout << v.at(pos);},
+		[](std::vector<char>&v, size_t& pos) {std::cin >> v.at(pos);},
+		[](std::vector<char>&v, size_t& pos) {},//dummy
+		[](std::vector<char>&v, size_t& pos) {},//dummy
+	};
+
+	std::vector<FUNCS> func_line;
+
+	for(auto& str: file_line){
+		auto str_extract = extract_str(str);
+
+		for(auto c: str_extract){
+			switch(c){
+				case '+':
+					func_line.push_back(FUNCS::ADD);
+					break;
+				case '-':
+					func_line.push_back(FUNCS::DIFF);
+					break;
+				case '>':
+					func_line.push_back(FUNCS::MEM_ADD);
+			}
+		}
+	}
+
 }
 
 int main(int argc, char*argv[]) {
@@ -151,19 +190,21 @@ int main(int argc, char*argv[]) {
 
 	using func_v  = std::function<void(std::vector<char>&, size_t&)>;
 	
-	enum {ADD, MIN, MEM_ADD, MEM_MIN, OUTPUT, INPUT};
-
 	size_t count_line;
 
 	std::vector<char>mem_str{0};
 
-	std::array<func_v, 6> func{
-		[](std::vector<char>&v,size_t& pos) {++v.at(pos);},
-		[](std::vector<char>&v,size_t& pos) {--v.at(pos);},
-		[](std::vector<char>&v,size_t& pos) {++pos;},
-		[](std::vector<char>&v,size_t& pos) {--pos;},
-		[](std::vector<char>&v,size_t& pos) {std::cout << v.at(pos);},
-		[](std::vector<char>&v,size_t& pos) {std::cin >> v.at(pos);},
+	enum class FUNCS: int {ADD, MIN, MEM_ADD, MEM_MIN, OUTPUT, INPUT, WHILE_BEGIN, WHILE_END};
+	
+	std::array<func_v, 8> func{
+		[](std::vector<char>&v, size_t& pos) {++v.at(pos);},
+		[](std::vector<char>&v, size_t& pos) {--v.at(pos);},
+		[](std::vector<char>&v, size_t& pos) {++pos;},
+		[](std::vector<char>&v, size_t& pos) {--pos;},
+		[](std::vector<char>&v, size_t& pos) {std::cout << v.at(pos);},
+		[](std::vector<char>&v, size_t& pos) {std::cin >> v.at(pos);},
+		[](std::vector<char>&v, size_t& pos) {},//dummy
+		[](std::vector<char>&v, size_t& pos) {},//dummy
 	};
 
 	/**
