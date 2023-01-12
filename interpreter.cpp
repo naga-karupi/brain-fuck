@@ -16,6 +16,12 @@ using end_while_pair   = start_while_pair;
 using sifstream = std::shared_ptr<std::ifstream>;
 
 /**
+ * @brief function type alias
+ * 
+ */
+enum class FUNCS: int {ADD, DIFF, MEM_ADD, MEM_DIFF, OUTPUT, INPUT, WHILE_BEGIN, WHILE_END};
+
+/**
  * @brief file selected check
  * 
  * @param com_line type is int
@@ -33,7 +39,7 @@ void file_selected_check(int com_line){
  * @param file_name type is string
  * @param shrd  type is shared_ptr<ifstream>
  */
-void file_exists_check(std::string file_name, sifstream shrd) {
+void file_exists_check(std::string file_name, sifstream &shrd) {
 	file::path path(file_name);
 
 	if(!file::exists(path)) {
@@ -46,21 +52,6 @@ void file_exists_check(std::string file_name, sifstream shrd) {
 	if(!(*shrd)) {
 		std::cerr << "file open error" << std::endl;
 		exit(1);
-	}
-}
-
-
-/**
- * @brief read to single string
- * 
- * @param shrd type is shared_ptr<ifstream>&
- * @param f_str type is string
- */
-void full_read_line(const sifstream shrd, std::string& f_str){
-	while(!shrd->eof()){
-		std::string tmp_string;
-		std::getline(*shrd, tmp_string);
-		f_str += tmp_string;
 	}
 }
 
@@ -102,6 +93,45 @@ std::string extract_str(std::string& f_str){
 	return bf_str;
 }
 
+std::shared_ptr<std::vector<FUNCS>> create_func_line(std::vector<std::string>& file_line){
+	auto shrd_v = std::make_shared<std::vector<FUNCS>>();
+
+		for(auto& str: file_line){
+		auto str_extract = extract_str(str);
+
+		for(auto c: str_extract){
+			switch(c){
+				case '+':
+					shrd_v->push_back(FUNCS::ADD);
+					break;
+				case '-':
+					shrd_v->push_back(FUNCS::DIFF);
+					break;
+				case '>':
+					shrd_v->push_back(FUNCS::MEM_ADD);
+					break;
+				case '<':
+					shrd_v->push_back(FUNCS::MEM_DIFF);
+					break;
+				case '.':
+					shrd_v->push_back(FUNCS::OUTPUT);
+					break;
+				case ',':
+					shrd_v->push_back(FUNCS::INPUT);
+					break;
+				case '[':
+					shrd_v->push_back(FUNCS::WHILE_BEGIN);
+					break;
+				case ']':
+					shrd_v->push_back(FUNCS::WHILE_END);
+					break;
+			}
+		}
+	}
+
+	return shrd_v;
+}
+
 void search_while_pair(std::vector<std::string> str_v){
 	uint64_t while_start_counter = 0, while_end_counter = 0;
 	for(auto str: str_v){
@@ -122,106 +152,64 @@ void search_while_pair(std::vector<std::string> str_v){
 	}
 }
 
-void file_exe(const sifstream shrd){
-	std::string f_str, bf_str;
-	std::vector<std::string> file_place;
-	using func_v  = std::function<void(std::vector<char>&, size_t&)>;
-	
-	enum {ADD, MIN, MEM_ADD, MEM_MIN, OUTPUT, INPUT};
+void file_exe(std::vector<std::string>& file_line){
+	using func_v  = std::function<void(std::vector<uint8_t>&, size_t&)>;
+	std::vector<uint8_t> mem_array(1);
 
-	size_t count_line;
-
-	std::vector<char>mem_str{0};
-	func_v add         = [](std::vector<char>&v, size_t& pos) {++v.at(pos);};
-	func_v min         = [](std::vector<char>&v, size_t& pos) {--v.at(pos);};
-	func_v mem_add     = [](std::vector<char>&v, size_t& pos) {++pos;};
-	func_v mem_min     = [](std::vector<char>&v, size_t& pos) {--pos;};
-	func_v output      = [](std::vector<char>&v, size_t& pos) {std::cout << v.at(pos);};
-	func_v input       = [](std::vector<char>&v, size_t& pos) {std::cin >> v.at(pos);};
-	func_v while_begin = [](std::vector<char>&v, size_t& pos) {};//dummy
-	func_v while_end   = [](std::vector<char>&v, size_t& pos) {};//dummy
-
-	read_line(shrd, file_place);
-
-//TODO
-}
-
-void file_exe(const sifstream& shrd, std::vector<std::string>& file_line){
-	using func_v  = std::function<void(std::vector<char>&, size_t&)>;
-
-	enum class FUNCS: int {ADD, DIFF, MEM_ADD, MEM_DIFF, OUTPUT, INPUT, WHILE_BEGIN, WHILE_END};
-	std::vector<FUNCS> func_line;
 	std::array<func_v, 8> func{
-		[](std::vector<char>&v, size_t& pos) {++v.at(pos);},
-		[](std::vector<char>&v, size_t& pos) {--v.at(pos);},
-		[](std::vector<char>&v, size_t& pos) {++pos;},
-		[](std::vector<char>&v, size_t& pos) {--pos;},
-		[](std::vector<char>&v, size_t& pos) {std::cout << v.at(pos);},
-		[](std::vector<char>&v, size_t& pos) {std::cin >> v.at(pos);},
-		[](std::vector<char>&v, size_t& pos) {},//dummy
-		[](std::vector<char>&v, size_t& pos) {},//dummy
+		[](std::vector<uint8_t>&v, size_t& pos) {++v.at(pos);},
+		[](std::vector<uint8_t>&v, size_t& pos) {--v.at(pos);},
+		[](std::vector<uint8_t>&v, size_t& pos) {
+			++pos;
+			if(pos == v.size()){
+				v.push_back(0);
+			}
+		},
+		[](std::vector<uint8_t>&v, size_t& pos) {
+			long long checker = static_cast<long long>(pos);
+			if(--checker < 0){
+				std::cerr << "wrong mem place" << std::endl;
+				exit(1);
+			}
+			--pos;
+		},
+		[](std::vector<uint8_t>&v, size_t& pos) {std::cout << v.at(pos);},
+		[](std::vector<uint8_t>&v, size_t& pos) {std::cin >> v.at(pos);},
+		[](std::vector<uint8_t>&v, size_t& pos) {},//dummy
+		[](std::vector<uint8_t>&v, size_t& pos) {},//dummy
 	};
 
-	for(auto& str: file_line){
-		auto str_extract = extract_str(str);
+	auto shrd_func_line = create_func_line(file_line);
 
-		for(auto c: str_extract){
-			switch(c){
-				case '+':
-					func_line.push_back(FUNCS::ADD);
-					break;
-				case '-':
-					func_line.push_back(FUNCS::DIFF);
-					break;
-				case '>':
-					func_line.push_back(FUNCS::MEM_ADD);
-					break;
-				case '<':
-					func_line.push_back(FUNCS::MEM_DIFF);
-					break;
-				case '.':
-					func_line.push_back(FUNCS::OUTPUT);
-					break;
-				case ',':
-					func_line.push_back(FUNCS::INPUT);
-					break;
-				case '[':
-					func_line.push_back(FUNCS::WHILE_BEGIN);
-					break;
-				case ']':
-					func_line.push_back(FUNCS::WHILE_END);
-					break;
-			}
+	size_t mem_place = 0;
+	size_t while_num = 0;
+	std::vector<size_t> while_place(10);
+
+	for(long unsigned i = 0; i < shrd_func_line->size(); i++) {
+		if(shrd_func_line->at(i) == FUNCS::WHILE_BEGIN) {
+			if(while_place.size() == while_num){
+				while_place.push_back(i);
+			}				
+			else
+				while_place.at(while_num-1) = i;
+			++while_num;
 		}
+
+		if(shrd_func_line->at(i) == FUNCS::WHILE_END){
+			if(mem_array.at(i))
+				i = while_place.at(while_num-1);
+			else 
+				--while_num;
+		}
+
+		func[(int)shrd_func_line->at(i)](mem_array, mem_place);
 	}
-
-
 
 }
 
 int main(int argc, char*argv[]) {
 	sifstream target_file;
-	std::string f_str, bf_str;
 	std::vector<std::string> file_lines;
-
-	using func_v  = std::function<void(std::vector<char>&, size_t&)>;
-	
-	size_t count_line;
-
-	std::vector<char>mem_str{0};
-
-	enum class FUNCS: int {ADD, MIN, MEM_ADD, MEM_MIN, OUTPUT, INPUT, WHILE_BEGIN, WHILE_END};
-	
-	std::array<func_v, 8> func{
-		[](std::vector<char>&v, size_t& pos) {++v.at(pos);},
-		[](std::vector<char>&v, size_t& pos) {--v.at(pos);},
-		[](std::vector<char>&v, size_t& pos) {++pos;},
-		[](std::vector<char>&v, size_t& pos) {--pos;},
-		[](std::vector<char>&v, size_t& pos) {std::cout << v.at(pos);},
-		[](std::vector<char>&v, size_t& pos) {std::cin >> v.at(pos);},
-		[](std::vector<char>&v, size_t& pos) {},//dummy
-		[](std::vector<char>&v, size_t& pos) {},//dummy
-	};
 
 	/**
 	 * @brief judge that the file is not invalid
@@ -242,54 +230,7 @@ int main(int argc, char*argv[]) {
 	/**
 	 * @brief execute source file
 	 */
-	file_exe(target_file, file_lines);//TODO
+	file_exe(file_lines);
 
-
-}
-
-void read_file(const sifstream& target_file, std::string& file_e) {
-	std::string check_str{'+', '-', '<', '>', '.', ',', '[', ']'};
-	std::string all_str;
-	while(!target_file->eof()) {
-		bool is_literal = false;
-		char tmp_char;
-		tmp_char =target_file->get();
-		
-		for(auto c: check_str){
-			is_literal |= (c == tmp_char);
-			if(is_literal) {
-				file_e += tmp_char;
-				break;
-			}
-		}
-	}
-}
-
-template<class f, class ...f_other>
-static inline void func_caller(std::vector<char>&v,size_t& pos,  f func, f_other ...fo){
-	func();
-}
-
-void analysis_code(std::string& str){
-	size_t pos = 0;
-
-	using v_char  = std::vector<char>;
-	using func_v  = std::function<void(v_char&, size_t&)>;
-//	using while_t = std::function<void(std::vector<char>&, size_t&, std::tuple<func_v, while_t>)>;
-
-	std::vector<char>mem_str{0};
-	func_v add     = [&](v_char&v,size_t& pos) {++v.at(pos);};
-	func_v min     = [&](v_char&v,size_t& pos) {--v.at(pos);};
-	func_v mem_add = [&](v_char&v,size_t& pos) {++pos;};
-	func_v mem_min = [&](v_char&v,size_t& pos) {--pos;};
-	func_v output  = [=](v_char&v,size_t& pos) {std::cout << v.at(pos);};
-	func_v input   = [&](v_char&v,size_t& pos) {std::cin >> v.at(pos);};
-/*
-	while_t bf_while = [&](std::vector<char>& buf, size_t& p, std::tuple<func_v>funcs) {
-		while(buf.at(p)){
-			for(int i = 0, )
-		}
-	} ;
-	*/
-
+	return 0;
 }
