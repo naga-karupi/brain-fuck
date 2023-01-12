@@ -150,7 +150,7 @@ void file_exe(const sifstream& shrd, std::vector<std::string>& file_line){
 	using func_v  = std::function<void(std::vector<char>&, size_t&)>;
 
 	enum class FUNCS: int {ADD, DIFF, MEM_ADD, MEM_DIFF, OUTPUT, INPUT, WHILE_BEGIN, WHILE_END};
-
+	std::vector<FUNCS> func_line;
 	std::array<func_v, 8> func{
 		[](std::vector<char>&v, size_t& pos) {++v.at(pos);},
 		[](std::vector<char>&v, size_t& pos) {--v.at(pos);},
@@ -161,8 +161,6 @@ void file_exe(const sifstream& shrd, std::vector<std::string>& file_line){
 		[](std::vector<char>&v, size_t& pos) {},//dummy
 		[](std::vector<char>&v, size_t& pos) {},//dummy
 	};
-
-	std::vector<FUNCS> func_line;
 
 	for(auto& str: file_line){
 		auto str_extract = extract_str(str);
@@ -177,9 +175,27 @@ void file_exe(const sifstream& shrd, std::vector<std::string>& file_line){
 					break;
 				case '>':
 					func_line.push_back(FUNCS::MEM_ADD);
+					break;
+				case '<':
+					func_line.push_back(FUNCS::MEM_DIFF);
+					break;
+				case '.':
+					func_line.push_back(FUNCS::OUTPUT);
+					break;
+				case ',':
+					func_line.push_back(FUNCS::INPUT);
+					break;
+				case '[':
+					func_line.push_back(FUNCS::WHILE_BEGIN);
+					break;
+				case ']':
+					func_line.push_back(FUNCS::WHILE_END);
+					break;
 			}
 		}
 	}
+
+
 
 }
 
