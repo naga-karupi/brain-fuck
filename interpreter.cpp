@@ -184,25 +184,27 @@ void file_exe(std::vector<std::string>& file_line){
 	size_t mem_place = 0;
 	size_t while_num = 0;
 	std::vector<size_t> while_place(10);
-
+	
 	for(long unsigned i = 0; i < shrd_func_line->size(); i++) {
 		if(shrd_func_line->at(i) == FUNCS::WHILE_BEGIN) {
-			if(while_place.size() == while_num){
-				while_place.push_back(i);
+			
+			if(while_place.size() == while_num){	
+				while_place.push_back(i);while(1);
 			}				
 			else
-				while_place.at(while_num-1) = i;
+				while_place.at(while_num) = i;
+			
 			++while_num;
 		}
 
 		if(shrd_func_line->at(i) == FUNCS::WHILE_END){
-			if(mem_array.at(i))
+			
+			if(mem_array.at(mem_place))
 				i = while_place.at(while_num-1);
-			else 
+			else
 				--while_num;
 		}
-
-		func[(int)shrd_func_line->at(i)](mem_array, mem_place);
+		func.at((int)shrd_func_line->at(i))(mem_array, mem_place);
 	}
 
 }
