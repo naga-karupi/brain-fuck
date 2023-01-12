@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.22)
-project(compiling CXX)
+project(bf_interpreter CXX)
 
-add_executable(compiler compiler.cpp)
-target_compile_features(compiler PUBLIC cxx_std_20)
-target_compile_options(compiler PUBLIC -O2 -Wall -Wextra -Wpedantic)
+add_executable(interpreter interpreter.cpp)
+target_compile_features(interpreter PUBLIC cxx_std_20)
+target_compile_options(interpreter PUBLIC -O2 -Wall -Wextra -Wpedantic)
 add_subdirectory(libs)
+
+if(DEBUG)
+    target_compile_options(interpreter PUBLIC -g)
+endif(DEBUG)
