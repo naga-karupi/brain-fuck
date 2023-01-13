@@ -1,4 +1,6 @@
+.vscode/
+assembler/
 build/
 test/
-.vscode/
+
 test.sh

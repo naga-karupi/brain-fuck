@@ -6,6 +6,8 @@
 #include <filesystem>
 #include <functional>
 
+#include "file_exists_check.hpp"
+
 /**
  * @brief arias
  * 
@@ -20,40 +22,6 @@ using sifstream = std::shared_ptr<std::ifstream>;
  * 
  */
 enum class FUNCS: int {ADD, DIFF, MEM_ADD, MEM_DIFF, OUTPUT, INPUT, WHILE_BEGIN, WHILE_END};
-
-/**
- * @brief file selected check
- * 
- * @param com_line type is int
- */
-void file_selected_check(int com_line){
-	if((com_line-1)<=0) {
-		std::cerr << "no file selected" << std::endl;
-		exit(1);
-	}
-}
-
-/**
- * @brief file exists check
- * 
- * @param file_name type is string
- * @param shrd  type is shared_ptr<ifstream>
- */
-void file_exists_check(std::string file_name, sifstream &shrd) {
-	file::path path(file_name);
-
-	if(!file::exists(path)) {
-		std::cerr << "the file do not exist" << std::endl;
-		exit(1);
-	}
-
-	shrd = std::make_shared<std::ifstream>(file_name, std::ios_base::in);
-
-	if(!(*shrd)) {
-		std::cerr << "file open error" << std::endl;
-		exit(1);
-	}
-}
 
 /**
  * @brief read each line to str_arr. 
@@ -156,6 +124,8 @@ void file_exe(std::vector<std::string>& file_line){
 	using func_v  = std::function<void(std::vector<uint8_t>&, size_t&)>;
 	std::vector<uint8_t> mem_array(1);
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 	std::array<func_v, 8> func{
 		[](std::vector<uint8_t>&v, size_t& pos) {++v.at(pos);},
 		[](std::vector<uint8_t>&v, size_t& pos) {--v.at(pos);},
@@ -178,6 +148,8 @@ void file_exe(std::vector<std::string>& file_line){
 		[](std::vector<uint8_t>&v, size_t& pos) {},//dummy
 		[](std::vector<uint8_t>&v, size_t& pos) {},//dummy
 	};
+
+#pragma GCC diagnostic pop
 
 	auto shrd_func_line = create_func_line(file_line);
 
